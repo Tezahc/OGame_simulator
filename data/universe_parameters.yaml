@@ -1,0 +1,20 @@
+Technologies:
+  Réacteur à Combustion: 17
+  Réacteur à Impultion: 12
+  Propultion Hyperespace: 10
+  Technologie Hyperespace: 12
+  Technologie Armes: 17
+  Technologie Bouclier: 16
+  Technologie Protection des vaisseaux spatiaux: 17
+Univers:
+  Installations de défense dans le champ de débris: 0
+  Flotte dans le champ de débris: 30
+  Deutérium dans le champ de débris: True
+  Consommation deutérium: 0.50
+Formes de Vie:
+  Bonus des vaisseaux:
+    Petit Transporteur: 
+      Fret: 16.68
+    Grand Transporteur:
+      Fret: 16.68
+    
