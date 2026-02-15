@@ -1,0 +1,47 @@
+[
+    {
+        "nom":"Ch lé",
+        "structure":4000,
+        "bouclier":10,
+        "attaque":50,
+        "vitesse":12500,
+        "fret":50,
+        "consommation":20
+    },
+    {
+        "nom":"Ch lo",
+        "structure":10000,
+        "bouclier":25,
+        "attaque":150,
+        "vitesse":10000,
+        "fret":100,
+        "consommation":75
+    },
+    {
+        "nom":"Croiseur",
+        "structure":27000,
+        "bouclier":50,
+        "attaque":400,
+        "vitesse":15000,
+        "fret":800,
+        "consommation":300
+    },
+    {
+        "nom":"Des",
+        "structure":110000,
+        "bouclier":700,
+        "attaque":2000,
+        "vitesse":5000,
+        "fret":2000,
+        "consommation":1000
+    },
+    {
+        "nom":"Petit transporteur",
+        "structure":4000,
+        "bouclier":10,
+        "attaque":5,
+        "vitesse":10000,
+        "fret":5000,
+        "consommation":20
+    }
+]
