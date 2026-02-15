@@ -1,6 +1,24 @@
 [
     {
-        "nom":"Ch lé",
+        "nom":"Petit transporteur",
+        "structure":4000,
+        "bouclier":10,
+        "attaque":5,
+        "vitesse":10000,
+        "fret":5000,
+        "consommation":20
+    },
+    {
+        "nom":"Grand transporteur",
+        "structure":12000,
+        "bouclier":25,
+        "attaque":5,
+        "vitesse":7500,
+        "fret":25000,
+        "consommation":50
+    },
+    {
+        "nom":"Chasseur léger",
         "structure":4000,
         "bouclier":10,
         "attaque":50,
@@ -9,7 +27,7 @@
         "consommation":20
     },
     {
-        "nom":"Ch lo",
+        "nom":"Chasseur lourd",
         "structure":10000,
         "bouclier":25,
         "attaque":150,
@@ -27,21 +45,111 @@
         "consommation":300
     },
     {
-        "nom":"Des",
+        "nom":"Vaisseau de bataille",
+        "structure":60000,
+        "bouclier":200,
+        "attaque":1000,
+        "vitesse":10000,
+        "fret":1500,
+        "consommation":500
+    },
+    {
+        "nom":"Bombardier",
+        "structure":75000,
+        "bouclier":500,
+        "attaque":1000,
+        "vitesse":5000,
+        "fret":500,
+        "consommation":700
+    },
+    {
+        "nom":"Destructeur",
         "structure":110000,
-        "bouclier":700,
+        "bouclier":500,
         "attaque":2000,
         "vitesse":5000,
         "fret":2000,
         "consommation":1000
     },
     {
-        "nom":"Petit transporteur",
-        "structure":4000,
-        "bouclier":10,
-        "attaque":5,
+        "nom":"Etoile de la mort",
+        "structure":9000000,
+        "bouclier":50000,
+        "attaque":200000,
+        "vitesse":100,
+        "fret":1000000,
+        "consommation":1
+    },
+    {
+        "nom":"Traqueur",
+        "structure":70000,
+        "bouclier":400,
+        "attaque":700,
         "vitesse":10000,
-        "fret":5000,
-        "consommation":20
+        "fret":750,
+        "consommation":250
+    },
+    {
+        "nom":"Faucheur",
+        "structure":140000,
+        "bouclier":700,
+        "attaque":2800,
+        "vitesse":7000,
+        "fret":10000,
+        "consommation":1100
+    },
+    {
+        "nom":"Eclaireur",
+        "structure":23000,
+        "bouclier":100,
+        "attaque":200,
+        "vitesse":12000,
+        "fret":10000,
+        "consommation":300
+    },
+    {
+        "nom":"Vaisseau de colonisation",
+        "structure":30000,
+        "bouclier":100,
+        "attaque":50,
+        "vitesse":2500,
+        "fret":7500,
+        "consommation":1000
+    },
+    {
+        "nom":"Recycleur",
+        "structure":16000,
+        "bouclier":10,
+        "attaque":1,
+        "vitesse":2000,
+        "fret":20000,
+        "consommation":300
+    },
+    {
+        "nom":"Sonde d'espionnage",
+        "structure":1000,
+        "bouclier":0,
+        "attaque":0,
+        "vitesse":100000000,
+        "fret":0,
+        "consommation":1
+    },
+    {
+        "nom":"Satellite solaire",
+        "structure":2000,
+        "bouclier":1,
+        "attaque":1,
+        "vitesse":0,
+        "fret":0,
+        "consommation":0
+    },
+    {
+        "nom":"Foreuse",
+        "structure":4000,
+        "bouclier":1,
+        "attaque":1,
+        "vitesse":0,
+        "fret":0,
+        "consommation":0
     }
 ]

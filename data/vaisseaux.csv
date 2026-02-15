@@ -1,6 +1,18 @@
 nom,structure,bouclier,attaque,vitesse,fret,consommation
+Petit transporteur,4000,10,5,10000,5000,20
+Grand transporteur,12000,25,5,7500,25000,50
 Chasseur léger,4000,10,50,12500,50,20
 Chasseur lourd,10000,25,150,10000,100,75
 Croiseur,27000,50,400,15000,800,300
+Vaisseau de bataille,60000,200,1000,10000,1500,500
+Bombardier,75000,500,1000,5000,500,700
 Destructeur,110000,500,2000,5000,2000,1000
-Petit transporteur,4000,10,5,10000,5000,20
+Etoile de la mort,9000000,50000,200000,100,1000000,1
+Traqueur,70000,400,700,10000,750,250
+Faucheur,140000,700,2800,7000,10000,1100
+Eclaireur,23000,100,200,12000,10000,300
+Vaisseau de colonisation,30000,100,50,2500,7500,1000
+Recycleur,16000,10,1,2000,20000,300
+Sonde d'espionnage,1000,0,0,100000000,0,1
+Satellite solaire,2000,1,1,0,0,0
+Foreuse,4000,1,1,0,0,0
