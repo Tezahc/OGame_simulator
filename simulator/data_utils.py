@@ -61,3 +61,17 @@ def replicate_rows(df: pd.DataFrame, counts: List[int]) -> pd.DataFrame:
 
     result = df.loc[repeated_idx].reset_index(drop=True)
     return result
+
+def compute_shield(df_side: pd.DataFrame):
+    df = df_side.copy()
+    df["dmg_shield"] = (np.floor(100 * df.attaque_A / df.bouclier_D) * df.bouclier_D // 100).astype(int)
+    df = df.sort_values(by=["cible", "tireur"])[["tireur", "nom_A", "attaque_A", "cible", "nom_D", "bouclier_D", "structure_D", "dmg_shield"]]
+
+    df["shield_aft_hit"] = df.bouclier_D - df.groupby("cible")["dmg_shield"].cumsum()
+
+    df["shield_bef_hit"] = df.groupby("cible")["shield_aft_hit"].shift(1).fillna(df.bouclier_D).astype(int)
+
+    is_overkill = df.shield_aft_hit <= 0
+    is_hs = df.shield_bef_hit <= 0
+    
+    return df
