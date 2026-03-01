@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Tuple, List, Dict, Optional
 
 # Bonus global affectant le temps de construction du chantier spatial
-BONUS_FDV_CHANTIER_SPATIAL: float = 0.0
+BONUS_FDV_CHANTIER_SPATIAL :float = 0.0
 
 @dataclass
 class Batiment:
@@ -41,17 +41,28 @@ class ChantierSpatial(Batiment):
 
     On garde la logique simple : le temps de construction d'un vaisseau dépend
     du niveau du chantier (et d'un bonus global), via la méthode `build_time`.
+    
+    formule de base : 2^(niveau-1)
+    cumulé :(coûts niveau 1) * - (1 - 2^niveau)
     """
+    base_metal :int = 400
+    base_cristal :int = 200
+    base_deuterium :int = 100
 
-    def build_time_multiplier(self) -> float:
-        """Retourne un multiplicateur de temps de construction basé sur le niveau
-        et le bonus global `BONUS_FDV_CHANTIER_SPATIAL`.
-        Formule simple par défaut : (1 / (1 + 0.1 * level)) * (1 - bonus)
+    @property
+    def build_time(self) -> float:
+        """Retourne le temps de construction basé sur le niveau du batiment
+        Formule (Métal + Cristal) / (2'500 * MAX (4 - niveau / 2, 1) * (1 + (niveau Usine de robots)) * (2 ^ (niveau Usine de Nanites)))
         """
-        base = 1.0 / (1.0 + 0.1 * max(0, self.level))
-        bonus_factor = max(0.0, 1.0 - BONUS_FDV_CHANTIER_SPATIAL)
-        return base * bonus_factor
-
+        next_metal, next_cristal, _ = self.cost_at_level(self.level)
+        temps = (next_metal + next_cristal) / (2_500 * max(4 - self.level / 2, 1))
+        return temps
+    
+    def cost_at_level(self, level) -> int:
+        next_metal = self.base_metal * 2 ** (self.level - 1) 
+        next_cristal = self.base_metal * 2 ** (self.level - 1) 
+        next_deutérium = self.base_metal * 2 ** (self.level - 1) 
+        return next_metal, next_cristal, next_deutérium
 
 @dataclass
 class Planet:
