@@ -1,149 +1,123 @@
-"""Modèles POO pour l'outil de répartition de production.
+"""Modèles POO (refacto minimal) pour l'outil de répartition.
 
-Contenu :
-- Planet
-- Batiment (Building)
-- ChantierSpatial (hérite de Batiment)
-- Vaisseau (base) + exemples de vaisseaux
-
-Utilise `dataclasses` (stdlib) pour simplicité et immutabilité des attributs de base.
+Conventions appliquées ici :
+- `Batiment` fournit la méthode générique `cost_at_level(level)`.
+- Les coûts de base sont obligatoires pour chaque sous-classe : implémentation via
+  une propriété `base_cost` abstraite que la sous-classe doit définir.
+- Les coûts sont exposés via la petite structure `Cost` pour permettre `cost.metal`.
+- Suppression des helpers liés aux vaisseaux/temps de construction pour l'instant.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Tuple, List, Dict, Optional
+from abc import ABC, abstractmethod
 
-# Bonus global affectant le temps de construction du chantier spatial
-BONUS_FDV_CHANTIER_SPATIAL :float = 0.0
+
+@dataclass(frozen=True)
+class Cost:
+    metal: int
+    cristal: int
+    deuterium: int
+
+    def as_dict(self) -> Dict[str, int]:
+        return {"metal": self.metal, "cristal": self.cristal, "deuterium": self.deuterium}
+
 
 @dataclass
-class Batiment:
-    """Représente un bâtiment générique sur une planète.
+class Batiment(ABC):
+    """Bâtiment générique.
 
-    - `name` : identifiant du type de bâtiment (ex: 'ChantierSpatial').
-    - `level` : niveau courant sur la planète.
-    - `global_props` : propriétés globales partagées entre toutes les instances de ce type
-      (ex: coût par niveau, facteurs de vitesse). Peut être servi par la classe projet.
+    - Les sous-classes DOIVENT définir la propriété `base_cost` qui renvoie un `Cost`
+      (coût du passage au niveau 1).
+    - `growth` est le facteur multiplicatif par niveau (par défaut 2.0).
+
+    Remarque sur `max(1, level)`: la formule calcule le coût pour "passer au niveau N" en
+    appliquant `base * growth**(N-1)`. Si `level` vaut 0 ou une valeur négative, on
+    considère le niveau minimal 1 pour éviter exposants négatifs ou coûts non-sens.
+    Cela garantit que `cost_at_level(1)` == `base_cost`.
     """
+
     name: str
     level: int = 0
-    global_props: Dict = field(default_factory=dict)
-
-    def effective_factor(self) -> float:
-        """Retourne un facteur multiplicatif générique dépendant du niveau.
-        Méthode simple par défaut ; peut être surchargée.
-        """
-        return 1.0 + 0.1 * self.level
-
-
-@dataclass
-class ChantierSpatial(Batiment):
-    """Bâtiment spécifique responsable de la construction des vaisseaux.
-
-    On garde la logique simple : le temps de construction d'un vaisseau dépend
-    du niveau du chantier (et d'un bonus global), via la méthode `build_time`.
-    
-    formule de base : 2^(niveau-1)
-    cumulé :(coûts niveau 1) * - (1 - 2^niveau)
-    """
-    base_metal :int = 400
-    base_cristal :int = 200
-    base_deuterium :int = 100
+    growth: float = 2.0
 
     @property
-    def build_time(self) -> float:
-        """Retourne le temps de construction basé sur le niveau du batiment
-        Formule (Métal + Cristal) / (2'500 * MAX (4 - niveau / 2, 1) * (1 + (niveau Usine de robots)) * (2 ^ (niveau Usine de Nanites)))
+    @abstractmethod
+    def base_cost(self) -> Cost:
+        """Doit être implémentée par la sous-classe pour fournir les coûts de base."""
+        raise NotImplementedError
+
+    def cost_at_level(self, level: int) -> Cost:
+        lvl = max(1, level)
+        exp = lvl - 1
+        return Cost(
+            metal=int(self._resource_cost(self.base_cost.metal, exp)),
+            cristal=int(self._resource_cost(self.base_cost.cristal, exp)),
+            deuterium=int(self._resource_cost(self.base_cost.deuterium, exp)),
+        )
+
+    def _resource_cost(self, base: int, exponent: int) -> float:
+        """Calcule le coût pour une ressource à partir d'un `base` et d'un exposant.
+
+        Cette méthode utilise `self.growth` (qui peut varier par instance) et peut
+        accéder à `self` si nécessaire. Elle n'est plus un `@staticmethod` pour
+        permettre l'utilisation de l'état d'instance si souhaité.
         """
-        next_metal, next_cristal, _ = self.cost_at_level(self.level)
-        temps = (next_metal + next_cristal) / (2_500 * max(4 - self.level / 2, 1))
-        return temps
-    
-    def cost_at_level(self, level) -> int:
-        next_metal = self.base_metal * 2 ** (self.level - 1) 
-        next_cristal = self.base_metal * 2 ** (self.level - 1) 
-        next_deutérium = self.base_metal * 2 ** (self.level - 1) 
-        return next_metal, next_cristal, next_deutérium
+        return base * (self.growth ** exponent)
 
-@dataclass
-class Planet:
-    """Représente une planète.
 
-    - `name` : nom
-    - `coords` : (galaxy, system, position)
-    - `is_main` : bool indiquant si c'est la planète principale
-    - `buildings` : liste d'instances de `Batiment` présents sur la planète
+class ChantierSpatial(Batiment):
+    """Chantier spatial : définit seulement les coûts de base pour le chantier.
+
+    La classe ne contient volontairement pas de logique de temps de construction
+    des vaisseaux pour l'instant (on y reviendra plus tard).
     """
-    name: str
-    coords: Tuple[int, int, int]
-    is_main: bool = False
-    buildings: List[Batiment] = field(default_factory=list)
 
-    def get_building(self, building_name: str) -> Optional[Batiment]:
+    # coûts de base (niveau 1) : à personnaliser ici (immutable via Cost)
+    _base_cost = Cost(metal=400, cristal=200, deuterium=100)
+
+    @property
+    def base_cost(self) -> Cost:
+        return self._base_cost
+
+
+class Planet:
+    """Représentation minimale d'une planète.
+
+    On évite de créer des getters spécialisés (ex: `get_chantier`) ; on expose
+    simplement la liste `buildings` et une méthode utilitaire `find_building`.
+    """
+
+    def __init__(self, name: str, coords: Tuple[int, int, int], is_main: bool = False):
+        self.name = name
+        self.coords = coords
+        self.is_main = is_main
+        self.buildings: List[Batiment] = []
+
+    def add_building(self, b: Batiment) -> None:
+        self.buildings.append(b)
+
+    def find_building(self, name: str) -> Optional[Batiment]:
         for b in self.buildings:
-            if b.name == building_name:
+            if b.name == name:
                 return b
         return None
 
-    def add_or_update_building(self, building: Batiment) -> None:
-        existing = self.get_building(building.name)
-        if existing:
-            existing.level = building.level
-            existing.global_props = building.global_props
-        else:
-            self.buildings.append(building)
 
-
-@dataclass
 class Vaisseau:
-    """Classe de base pour un vaisseau.
+    """Représentation minimale d'un vaisseau pour usage futur.
 
-    - `type_name` : identifiant du vaisseau (ex: 'Chasseur').
-    - `base_build_time` : temps de construction de référence (en secondes ou minutes).
-    - `params` : autres paramètres (coût, capacité, etc.)
-    - `ready` : quantité déjà disponible sur la planète (optionnel)
+    On n'implémente pas la logique de temps de construction ici (remplacée plus tard
+    par la logique qui composera les bâtiments de la planète).
     """
-    type_name: str
-    base_build_time: float
-    params: Dict = field(default_factory=dict)
-    ready: int = 0
-
-    def build_time_on(self, chantier: ChantierSpatial, other_buildings: List[Batiment]=None) -> float:
-        """Calcule le temps de construction sur une planète donnée en fonction du
-        niveau du `chantier` et d'autres bâtiments éventuels.
-
-        Formule proposée (simple et homogène pour tous les vaisseaux) :
-            time = base_build_time * chantier.build_time_multiplier() / building_factor
-        where `building_factor` is product of effective_factor() of relevant buildings (>=1).
-
-        Cette formule est volontairement simple ; tu pourras la remplacer ultérieurement.
-        """
-        other_buildings = other_buildings or []
-        building_factor = 1.0
-        for b in other_buildings:
-            building_factor *= b.effective_factor()
-        return float(self.base_build_time) * chantier.build_time_multiplier() / max(1.0, building_factor)
+    def __init__(self, type_name: str, base_build_time: float, ready: int = 0):
+        self.type_name = type_name
+        self.base_build_time = base_build_time
+        self.ready = ready
 
 
-# Exemples de sous-classes de vaisseaux (peuvent servir pour typage spécifique)
-class ChasseurLeger(Vaisseau):
-    def __init__(self, ready: int = 0):
-        super().__init__(type_name='Chasseur Léger', 
-                         base_build_time=30.0, 
-                         params={'attack': 50}, 
-                         ready=ready)
-
-
-class GrandTransporteur(Vaisseau):
-    def __init__(self, ready: int = 0):
-        super().__init__(type_name='Grand Transporteur', 
-                         base_build_time=120.0, 
-                         params={'capacity': 1000}, 
-                         ready=ready)
-
-
-# Utilitaire : liste fixe des types de vaisseaux disponibles (instances prototypes)
-DEFAULT_VAISSEAUX = [
-    ChasseurLeger(),
-    GrandTransporteur(),
-    # ajouter d'autres prototypes ici (jusqu'à ~10)
-]
+# exemples rapides (non obligatoires)
+if __name__ == '__main__':
+    cs = ChantierSpatial(name='Chantier', level=3)
+    print('base cost:', cs.base_cost)
+    print('cost to reach level 3:', cs.cost_at_level(3))
