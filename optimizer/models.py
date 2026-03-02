@@ -1,11 +1,11 @@
 """Modèles POO (refacto minimal) pour l'outil de répartition.
 
 Conventions appliquées ici :
-- `Batiment` fournit la méthode générique `cost_at_level(level)`.
+- `Batiment` fournit la méthode générique `cost_at_level(level)` et `build_time(level)`.
 - Les coûts de base sont obligatoires pour chaque sous-classe : implémentation via
   une propriété `base_cost` abstraite que la sous-classe doit définir.
 - Les coûts sont exposés via la petite structure `Cost` pour permettre `cost.metal`.
-- Suppression des helpers liés aux vaisseaux/temps de construction pour l'instant.
+- Planet propose un wrapper `build_time_for(name, level)` comme façade pratique.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -31,10 +31,8 @@ class Batiment(ABC):
       (coût du passage au niveau 1).
     - `growth` est le facteur multiplicatif par niveau (par défaut 2.0).
 
-    Remarque sur `max(1, level)`: la formule calcule le coût pour "passer au niveau N" en
-    appliquant `base * growth**(N-1)`. Si `level` vaut 0 ou une valeur négative, on
-    considère le niveau minimal 1 pour éviter exposants négatifs ou coûts non-sens.
-    Cela garantit que `cost_at_level(1)` == `base_cost`.
+    `build_time` est défini par défaut ici à partir des coûts ; les sous-classes
+    peuvent redéfinir la méthode si nécessaire.
     """
 
     name: str
@@ -44,7 +42,6 @@ class Batiment(ABC):
     @property
     @abstractmethod
     def base_cost(self) -> Cost:
-        """Doit être implémentée par la sous-classe pour fournir les coûts de base."""
         raise NotImplementedError
 
     def cost_at_level(self, level: int) -> Cost:
@@ -57,23 +54,25 @@ class Batiment(ABC):
         )
 
     def _resource_cost(self, base: int, exponent: int) -> float:
-        """Calcule le coût pour une ressource à partir d'un `base` et d'un exposant.
-
-        Cette méthode utilise `self.growth` (qui peut varier par instance) et peut
-        accéder à `self` si nécessaire. Elle n'est plus un `@staticmethod` pour
-        permettre l'utilisation de l'état d'instance si souhaité.
-        """
         return base * (self.growth ** exponent)
+
+    def build_time(self, level: int) -> float:
+        """Calcul simple du temps de construction basé sur la somme des coûts métal+cristal.
+
+        Formula: (metal + cristal) / (2500 * max(4 - level/2, 1))
+        - placé ici parce que le calcul utilise uniquement les coûts propres au bâtiment.
+        - Planet pourra rester la source de vérité pour composer effets d'autres bâtiments
+          et ajouter des temps de trajet ; mais le calcul de base du batiment appartient
+          logiquement au Batiment lui-même.
+        """
+        costs = self.cost_at_level(level)
+        return (costs.metal + costs.cristal) / (2500 * max(4 - level / 2, 1))
 
 
 class ChantierSpatial(Batiment):
     """Chantier spatial : définit seulement les coûts de base pour le chantier.
-
-    La classe ne contient volontairement pas de logique de temps de construction
-    des vaisseaux pour l'instant (on y reviendra plus tard).
     """
 
-    # coûts de base (niveau 1) : à personnaliser ici (immutable via Cost)
     _base_cost = Cost(metal=400, cristal=200, deuterium=100)
 
     @property
@@ -84,8 +83,9 @@ class ChantierSpatial(Batiment):
 class Planet:
     """Représentation minimale d'une planète.
 
-    On évite de créer des getters spécialisés (ex: `get_chantier`) ; on expose
-    simplement la liste `buildings` et une méthode utilitaire `find_building`.
+    Fournit une façade `build_time_for(name, level)` pour obtenir le temps de
+    construction du bâtiment nommé sur cette planète sans avoir à manipuler
+    explicitement l'instance de bâtiment.
     """
 
     def __init__(self, name: str, coords: Tuple[int, int, int], is_main: bool = False):
@@ -103,21 +103,32 @@ class Planet:
                 return b
         return None
 
+    def build_time_for(self, name: str, level: int) -> float:
+        """Façade pratique : récupère le bâtiment par `name` et appelle sa méthode `build_time`.
+
+        Usage recommandé : `planet.build_time_for('Chantier', level)` ou
+        `planet.find_building('Chantier').build_time(level)` si tu veux travailler
+        directement avec l'instance.
+        """
+        b = self.find_building(name)
+        if b is None:
+            raise ValueError(f"Bâtiment '{name}' introuvable sur la planète {self.name}")
+        return b.build_time(level)
+
 
 class Vaisseau:
-    """Représentation minimale d'un vaisseau pour usage futur.
-
-    On n'implémente pas la logique de temps de construction ici (remplacée plus tard
-    par la logique qui composera les bâtiments de la planète).
-    """
+    """Représentation minimale d'un vaisseau pour usage futur."""
     def __init__(self, type_name: str, base_build_time: float, ready: int = 0):
         self.type_name = type_name
         self.base_build_time = base_build_time
         self.ready = ready
 
 
-# exemples rapides (non obligatoires)
+# test rapide si exécuté directement
 if __name__ == '__main__':
     cs = ChantierSpatial(name='Chantier', level=3)
-    print('base cost:', cs.base_cost)
-    print('cost to reach level 3:', cs.cost_at_level(3))
+    p = Planet('Mere', (1,1,1), is_main=True)
+    p.add_building(cs)
+    print('cost level3:', cs.cost_at_level(3))
+    print('build time (chantier level 3) via Batiment:', cs.build_time(3))
+    print('build time via Planet facade:', p.build_time_for('Chantier', 3))
